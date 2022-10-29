@@ -43,6 +43,10 @@
               }, typeof headerItemClassName === 'string' ? headerItemClassName : headerItemClassName(header as Header, index)]"
               :style="getFixedDistance(header.value)"
               @click.stop="(header.sortable && header.sortType) ? updateSortField(header.value, header.sortType) : null"
+              draggable="true"
+              :ondrop="handleDrop"
+              :ondragover="allowDrop"
+              :ondragstart="dragHandler"
             >
               <MultipleSelectCheckBox
                 v-if="header.text === 'checkbox'"
@@ -522,6 +526,29 @@ const getFixedDistance = (column: string, type: 'td' | 'th' = 'th') => {
     return `left: ${columInfo.distance}px;z-index: ${type === 'th' ? 3 : 1};position: sticky;`;
   }
   return undefined;
+};
+
+// drag to reorder columns
+
+let dragSrc = null;
+
+const dragHandler = (event: DragEvent) => {
+	dragSrc = event.target;
+	event.dataTransfer.allowEffected = 'move';
+	event.dataTransfer.setData('text/html',event.target.innerHTML);
+};
+
+const allowDrop = (event: DragEvent) => {
+	event.preventDefault();
+}
+
+const handleDrop = (event: DragEvent) => {
+	console.log(dragSrc);
+	event.stopPropagation();
+	dragSrc.innerHTML = event.target.innerHTML;
+	event.target.innerHTML = event.dataTransfer.getData('text/html');
+
+	return false;
 };
 
 watch(loading, (newVal, oldVal) => {
