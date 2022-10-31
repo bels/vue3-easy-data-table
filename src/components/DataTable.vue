@@ -44,6 +44,7 @@
               :style="getFixedDistance(header.value)"
               @click.stop="(header.sortable && header.sortType) ? updateSortField(header.value, header.sortType) : null"
               draggable="true"
+              :data-index="index"
               :ondrop="handleDrop"
               :ondragover="allowDrop"
               :ondragstart="dragHandler"
@@ -369,6 +370,7 @@ const emits = defineEmits([
   'clickRow',
   'expandRow',
   'updateSort',
+  'reorder',
   'update:itemsSelected',
   'update:serverOptions',
 ]);
@@ -534,8 +536,6 @@ let dragSrc = null;
 
 const dragHandler = (event: DragEvent) => {
 	dragSrc = event.target;
-	event.dataTransfer.allowEffected = 'move';
-	event.dataTransfer.setData('text/html',event.target.innerHTML);
 };
 
 const allowDrop = (event: DragEvent) => {
@@ -543,10 +543,30 @@ const allowDrop = (event: DragEvent) => {
 }
 
 const handleDrop = (event: DragEvent) => {
-	console.log(dragSrc);
 	event.stopPropagation();
-	dragSrc.innerHTML = event.target.innerHTML;
-	event.target.innerHTML = event.dataTransfer.getData('text/html');
+
+	let sourceIndex = dragSrc.dataset.index;
+	let destIndex = -1;
+
+	if(event.target.localName.toLowerCase() === 'th'){
+		destIndex = event.target.dataset.index;
+	} else {
+		destIndex = event.target.parentElement.dataset.index;
+	}
+
+	//checking for multiselect column
+	if(headersForRender.value.findIndex(h => h.text === 'checkbox') != -1){
+		destIndex--;
+		sourceIndex--;
+	}
+
+	let srcHeaderColumn = headers.value[sourceIndex];
+	let destHeaderColumn = headers.value[destIndex];;
+
+	headers.value.splice(sourceIndex,1,destHeaderColumn);
+	headers.value.splice(destIndex,1,srcHeaderColumn);
+
+	emits('reorder');
 
 	return false;
 };
