@@ -43,7 +43,7 @@
               }, typeof headerItemClassName === 'string' ? headerItemClassName : headerItemClassName(header as Header, index)]"
               :style="getFixedDistance(header.value)"
               @click.stop="(header.sortable && header.sortType) ? updateSortField(header.value, header.sortType) : null"
-              draggable="true"
+              :draggable="reorder"
               :data-index="index"
               :ondrop="handleDrop"
               :ondragover="allowDrop"
@@ -305,6 +305,11 @@ const props = defineProps({
     type: Array as PropType<Header[]>,
     required: true,
   },
+  reorder: {
+	type: Boolean,
+	required: false,
+	default: true
+  }
 });
 
 const {
@@ -566,7 +571,7 @@ const handleDrop = (event: DragEvent) => {
 	headers.value.splice(sourceIndex,1,destHeaderColumn);
 	headers.value.splice(destIndex,1,srcHeaderColumn);
 
-	emits('reorder');
+	emits('reorder',{srcIndex: sourceIndex, destIndex: destIndex});
 
 	return false;
 };
